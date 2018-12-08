@@ -1,0 +1,14 @@
+# EditorConfig is awesome: https://EditorConfig.org
+# This file should be encoded in UTF-8 with CRLF or LF line endings.
+
+root = true
+
+# Add a blank newline to the end of every file after saving
+# Trim trailing whitespace
+[*]
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{txt,pm,pl}]
+indent_style = space
+indent_size = 4
