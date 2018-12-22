@@ -1,0 +1,58 @@
+# An event macro to move an item from other server's storage to Valhalla storage
+#
+# Prerequisites:
+# - Openkore that support eventMacro plugin (not Macro!)
+# - eventMacro plugin itself, see http://openkore.com/index.php/EventMacro
+# - Move your character to near Alberta's Kafra Staff at 28 229
+#
+# eventMacro moveitem "<storage_response_num>" "<item_name>" "<amount_to_inventory>" "<amount_to_cart>"
+# "<storage_response_num>" - Response number for storage
+#                            "r1" Asgard, "r2" Midgard, "r3" Thor, "r4" FnC
+# "<item_name>"            - The item name you'd like to move. Example "Jellopy"
+# "<amount_to_inventory>"  - The amount that your character can hold, example "300"
+# "<amount_to_cart>"       - The amount that your cart can hold, example "300". Optional
+#
+# Use quotes for each params, example:
+# eventMacro moveitem "r2" "Rough Elunium" "200"
+#
+# [Cydh]
+macro moveitem {
+    set macro_delay 0.01
+
+	do talknpc 28 229 c r1 $.param[0]
+
+	pause 3
+	$left = &storamount($.param[1])
+	do storage get $.param[1] $.param[2]
+	$left = &eval($left - $.param[2])
+	if ($.cartmaxweight > 0 && $.param[3] > 0) {
+		pause 0.5
+		do storage gettocart $.param[1] $.param[3]
+		$left = &eval($left - $.param[3])
+	}
+
+	pause 0.5
+	do storage close
+
+	pause 1
+	if (&invamount($.param[1]) < 1 && &cartamount($.param[1]) < 1) {
+		stop
+	}
+	do talknpc 28 229 c r1 r0
+
+	pause 3
+	do storage add $.param[1]
+	if ($.cartmaxweight > 0 && $.param[3] > 0) {
+		pause 0.5
+		do storage addfromcart $.param[1]
+	}
+	pause 0.5
+	do storage close
+
+	if ($left > 0) {
+		log item $.param[1] left $left
+		call moveitem "$.param[0]" "$.param[1]" "$.param[2]" "$.param[3]"
+	} else {
+		log Moving item $.param[1] is complete
+	}
+}
