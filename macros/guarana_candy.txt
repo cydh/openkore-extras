@@ -1,0 +1,47 @@
+# THIS IS NOT MACRO TO DONE THE QUEST
+macro doBuyCandy {
+	$npc = @npc(187 162)
+	if ($npc == -1) {
+		stop
+	}
+	$weight = @eval($.weight * 100 / $.maxweight)
+	if ($weight > 97 || $.zeny < 4000 || @invamount(Guarana Candy) > 1500) {
+		stop
+	}
+	do talknpc 187 162 c c c r0 n
+}
+
+automacro itemGained {
+	delay 3
+	hook item_gathered
+	save item
+	save id
+	exclusive 1
+	call {
+		if ($.hooksave1 == 12414) {
+			call doBuyCandy
+		}
+	}
+}
+
+automacro talktonpc {
+	delay 2
+	location brasilis 182 165 190 155
+	macro_delay 0.01
+	run-once 1
+	call {
+		call doBuyCandy
+		pause 5
+	}
+}
+
+automacro movetobrasilis {
+	delay 3
+	location not brasilis 182 165 190 155
+	macro_delay 0.01
+	call {
+		do move brasilis 187 162
+		release talktonpc
+	}
+	timeout 30
+}
