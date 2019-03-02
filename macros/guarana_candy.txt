@@ -5,7 +5,9 @@ macro doBuyCandy {
 		stop
 	}
 	$weight = @eval($.weight * 100 / $.maxweight)
-	if ($weight > 97 || $.zeny < 4000 || @invamount(Guarana Candy) > 1500) {
+	$amt = @invamount(Guarana Candy)
+	if ($weight > 97 || $.zeny < 4000 || $amt > 1500) {
+		log Stop at \$weight:weight \$.zeny:$.zeny Guarana Candy \$amt:$amt
 		stop
 	}
 	do talknpc 187 162 c c c r0 n
@@ -15,10 +17,14 @@ automacro itemGained {
 	delay 3
 	hook item_gathered
 	save item
-	save id
-	exclusive 1
+	#save id
+	#exclusive 1
 	call {
-		if ($.hooksave1 == 12414) {
+		#log item_gathered \$.hooksave0:$.hooksave0 \$.hooksave1:$.hooksave1
+		#if ($.hooksave1 == 12414) {
+		#	call doBuyCandy
+		#}
+		if ($.hooksave0 == Guarana Candy) {
 			call doBuyCandy
 		}
 	}
@@ -40,7 +46,7 @@ automacro movetobrasilis {
 	location not brasilis 182 165 190 155
 	macro_delay 0.01
 	call {
-		do move brasilis 187 162
+		do move brasilis @rand(182,188) @rand(158,160)
 		release talktonpc
 	}
 	timeout 30
