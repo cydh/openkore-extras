@@ -1,13 +1,15 @@
 ##
-# Solve message with itemlink
+# Solve message with ITEML string
 #
 # Pre-requisite: https://github.com/OpenKore/openkore/pull/2541 for fromBase62
 #
-# Usage:
-# use Itemlink;
-# $message = "... <ITEML>000co11rK&8M(16d(00(00(00</ITEML> ...";
-# $itemlink = new Itemlink($message);
-# message $itemlink->getMessage()."\n";
+# Example:
+#  use Itemlink;
+#  $message = "... <ITEML>000co11rK&8M(16d(00(00(00</ITEML> ...";
+#  $itemlink = new Itemlink($message);
+#  message $itemlink->getMessage()."\n";
+#
+# @author [Cydh]
 package Itemlink;
 
 use strict;
@@ -43,7 +45,7 @@ sub solveItemLink {
 	my ($itemstr, $infostr) = ($1, $2);
 	my ($loc, $showslots, $id) = $itemstr =~ /([\d\w]{5})(\d)([\d\w]+)/;
 	my ($refine) = $infostr =~ /%([\d\w]+)/;
-	my ($itemtype) = $infostr =~ /&([\d\w]+)/;
+	my ($view) = $infostr =~ /&([\d\w]+)/;
 	my $item_info = {
 		nameID => fromBase62($id),
 		upgrade => fromBase62($refine),
@@ -51,7 +53,7 @@ sub solveItemLink {
 
     my $item_data = {
         nameID => $item_info->{nameID},
-        name => itemNameSimple($item_info->{nameID}),
+        #name => itemNameSimple($item_info->{nameID}),
         upgrade => $item_info->{upgrade},
     };
 
@@ -92,12 +94,64 @@ sub solveItemLink {
 	return "<".$item_data->{name}.">";
 }
 
+sub solveItemLink2 {
+	my ($self, $itemlstr, $url) = @_;
+
+	# Item ID as minimum requirement
+	if (!($itemlstr =~ /^([\d\w]+)(.*)/)) {
+		return $itemlstr;
+	}
+
+	my ($itemstr, $infostr) = ($1, $2);
+	my ($loc, $showslots, $id) = $itemstr =~ /([\d\w]{5})(\d)([\d\w]+)/;
+	my ($refine) = $infostr =~ /%([\d\w]+)/;
+	my ($view) = $infostr =~ /&([\d\w]+)/;
+	my $item_info = {
+		nameID => fromBase62($id),
+		upgrade => fromBase62($refine),
+	};
+
+    if ($url eq "") {
+        $url = "https://www.divine-pride.net/database/item/";
+    }
+
+    my $itemstr = "[".itemName($item_info)."](".$url."".$item_info->{nameID}.")";
+    my @cards;
+	foreach my $card (map { $_ } $infostr =~ /\(([\d\w]+)/g) {
+        my $cardid = fromBase62($card);
+        if ($cardid) {
+            #$itemstr .= "[".itemNameSimple($cardid)."](".$url."".$cardid.")";
+            push @cards,"[".itemNameSimple($cardid)."](".$url."".$cardid.")";
+        }
+	}
+    if (scalar @cards) {
+        $itemstr .= "\[".join(':',@cards)."\]";
+    }
+
+	return "<".$itemstr.">";
+}
+
 ##
 # $Itemlink->getMessage()
 #
 # Return the solved message from itemlink as message string
 sub getMessage {
 	my ($self) = @_;
+	return $self->{message};
+}
+
+##
+# $Itemlink->getMessageMD()
+#
+# Return the solved message from itemlink as message string with markdown
+# Optional param is item_url for item info url
+sub getMessageMD {
+	my ($self, $item_url) = @_;
+    if ($self->{raw_message} =~ /<ITEML>([a-zA-Z0-9\%\&\(\,\+\*]*)<\/ITEML>/) {
+        my $msg = $self->{raw_message};
+        $msg =~ s/<ITEML>([a-zA-Z0-9\%\&\(\,\+\*]*)<\/ITEML>/$self->solveItemLink2($1,$item_url)/eg;
+        return $msg;
+    }
 	return $self->{message};
 }
 
